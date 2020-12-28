@@ -10,5 +10,6 @@ urlpatterns = [
     path("animes/", views.lista_animes),
     path('buscaranimesporfechainicio/', views.buscar_animesporfechainicio),
     path('buscaranimesporgenero/', views.buscar_animesporgenero),
+    path('buscaranimesporsinopsis/', views.buscar_animesporsinopsis),
     path('admin/', admin.site.urls),
 ]
