@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang='es'>
+<head>
+  <meta charset='utf-8'>
+  <title>ProyectoAII</title>
+  <style>
+   {% block style_css %}{% endblock %}
+  </style>
+</head>
+<body>
+  <header> 
+  	{% block encabezado %}{% endblock %}
+
+ 			<dd><a href='/'>Inicio</a></dd>
+			<dd><a href='/carga'>Cargar la BD</a></dd>
+			<dd><a href='/animes'>Listar todos los animes</a></dd>
+			<dd><a href='/buscaranimesporfechainicio'>Buscar animes por fecha de inicio</a></dd>
+			<dd><a href='/buscaranimesporgenero'>Buscar animes por género</a></dd>
+	<hr>
+  </header>
+  <section>
+    {% block contenido %}{% endblock %}
+  </section>
+  {% block pie %}{% endblock %} 
+</body>
+</html>
