@@ -5,7 +5,7 @@ import urllib.request
 import datetime
 import os
 
-from main.models import Anime, Genero
+from main.models import Anime, Genero, InformacionUsuario, Calificacion
 from main.forms import BusquedaPorFechaInicioForm, BusquedaPorGeneroForm, BusquedaPorSinopsisForm
 
 from django.shortcuts import render, redirect
@@ -17,12 +17,10 @@ from whoosh.fields import Schema, TEXT, DATETIME, KEYWORD
 from whoosh.qparser import QueryParser
 from whoosh import qparser
 from whoosh.filedb.filestore import FileStorage
-from pickle import NONE
 
 dirindex = r"C:\Users\PedroC\git\proyectoaii\Index"
 
-def monthToNum(shortMonth):
-
+def mesANum(mes):
     return {
             'Jan' : 1,
             'Feb' : 2,
@@ -36,7 +34,7 @@ def monthToNum(shortMonth):
             'Oct' : 10,
             'Nov' : 11,
             'Dec' : 12
-    }[shortMonth]
+    }[mes]
 
 def get_schema():
     return Schema(titulo=TEXT(stored=True), imagen=TEXT(stored=True), rango_web=TEXT(stored=True), 
@@ -84,9 +82,9 @@ def populateDB(i):
             sinopsis = s.find("p").text
             
             if(len(emision) > 0):
-                fecha_inicio = datetime.datetime(int(emision[2]), monthToNum(emision[0]), int(emision[1].split(',')[0])).strftime("%Y-%m-%d")
+                fecha_inicio = datetime.datetime(int(emision[2]), mesANum(emision[0]), int(emision[1].split(',')[0])).strftime("%Y-%m-%d")
             if(len(emision) > 5):
-                fecha_final = datetime.datetime(int(emision[6]), monthToNum(emision[4]), int(emision[5].split(',')[0])).strftime("%Y-%m-%d")
+                fecha_final = datetime.datetime(int(emision[6]), mesANum(emision[4]), int(emision[5].split(',')[0])).strftime("%Y-%m-%d")
             
             lista_generos = s.find("td", class_="borderClass").next_element.find_all('span', itemprop="genre")
             
@@ -104,8 +102,9 @@ def populateDB(i):
             lista_generos_obj.append(genero_obj)
             if created:
                 num_generos += 1       
-                
-        a = Anime.objects.create(titulo=titulo, imagen=imagen, rango=rango_web, popularidad=popularidad_web, episodios=episodios, sinopsis=sinopsis, fechaInicio=fecha_inicio, fechaFinal=fecha_final)
+        
+        id_u = Anime.objects.all().count() + 1     
+        a = Anime.objects.create(id=id_u, titulo=titulo, imagen=imagen, rango=rango_web, popularidad=popularidad_web, episodios=episodios, sinopsis=sinopsis, fechaInicio=fecha_inicio, fechaFinal=fecha_final)
         
         for genero in lista_generos_obj:
             a.generos.add(genero)
@@ -117,7 +116,7 @@ def populateDB(i):
     writer.commit()
       
     return ((num_animes, num_generos))
-    
+  
 def carga(request):
     
     if request.method=='POST':
@@ -135,7 +134,9 @@ def carga(request):
 def index(request): 
     num_animes = Anime.objects.all().count()
     num_generos = Genero.objects.all().count()
-    return render(request,'inicio.html', {'num_animes':num_animes, 'num_generos':num_generos})
+    num_usuarios = InformacionUsuario.objects.all().count()
+    num_calificaciones = Calificacion.objects.all().count()
+    return render(request,'inicio.html', {'num_animes':num_animes, 'num_generos':num_generos, 'num_usuarios':num_usuarios, 'num_calificaciones':num_calificaciones})
 
 def lista_animes(request):
     animes = Anime.objects.all()
@@ -187,7 +188,36 @@ def buscar_animesporsinopsis(request):
                 lista_animes.append(anime)
                 
     return render(request, 'animesbusquedaporsinopsis.html', {'formulario':formulario, 'animes':lista_animes})
+
+def popularUsuarios():
+    InformacionUsuario.objects.all().delete()
     
-    
+    lista=[]
+    dict={}
+    fileobj=open(r"C:\Users\PedroC\git\proyectoaii\data\users", "r")
+    for line in fileobj.readlines():
+        rip = line.split('|')
+        if len(rip) != 4:
+            continue
+        id_u=int(rip[0].strip())
+        u=InformacionUsuario(id=id_u, edad=rip[1].strip(), genero=rip[2].strip(), codigoPostal=rip[3].strip())
+        lista.append(u)
+        dict[id_u]=u
+    fileobj.close()
+    InformacionUsuario.objects.bulk_create(lista)
+
+    return(dict)
+
+def cargar_usuarios(request):
+    if request.method=='POST':
+        if 'Aceptar' in request.POST:
+            popularUsuarios()
+            num_usuarios = InformacionUsuario.objects.all().count()
+            mensaje="Se han almacenado " + str(num_usuarios) + " usuarios"
+            return render(request, 'cargaBD.html', {'mensaje':mensaje})
+        else:
+            return redirect("/")
+           
+    return render(request, 'confirmacion.html')
     
     

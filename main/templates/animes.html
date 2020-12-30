@@ -11,7 +11,7 @@
 			{% for row in animes %}
 				
 				<dt><img src="{{row.imagen}}"></dt>
-			    <dt><b>Titulo: </b>{{row.titulo}}</dt>
+			    <dt><b>Titulo: </b>{{row.titulo}} | <b>ID: </b> {{row.id}}</dt>
 			    <dd><b>Rango: </b>{{row.rango}} | <b>Popularidad: </b>{{row.popularidad}} | <b>Episodios: </b>{{row.episodios}} </dd>
 			    <dd><b>Fecha de Inicio: </b>{{row.fechaInicio}} | <b>Fecha de Fin: </b>{{row.fechaFinal}} </dd>
 			    <dd><b>Sinopsis: </b>{{row.sinopsis}}</dd>
