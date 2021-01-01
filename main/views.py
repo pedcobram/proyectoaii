@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 
-
 import urllib.request
 import datetime
 import os
+import shelve
 
 from main.models import Anime, Genero, InformacionUsuario, Calificacion
-from main.forms import BusquedaPorFechaInicioForm, BusquedaPorGeneroForm, BusquedaPorSinopsisForm
-
-from django.shortcuts import render, redirect
+from main.forms import BusquedaPorFechaInicioForm, BusquedaPorGeneroForm, BusquedaPorSinopsisForm, UsuarioForm, AnimeForm
+from django.shortcuts import render, redirect, get_object_or_404
+from main.recommendations import getRecommendations, transformPrefs, topMatches
+#from data import createDataFile, createUserFile
 
 from bs4 import BeautifulSoup
 
@@ -17,6 +18,7 @@ from whoosh.fields import Schema, TEXT, DATETIME, KEYWORD
 from whoosh.qparser import QueryParser
 from whoosh import qparser
 from whoosh.filedb.filestore import FileStorage
+from django.http.response import Http404
 
 dirindex = r"C:\Users\PedroC\git\proyectoaii\Index"
 
@@ -36,17 +38,37 @@ def mesANum(mes):
             'Dec' : 12
     }[mes]
 
+def cargarDiccionario():
+    Prefs={}   # matriz de usuarios y puntuaciones a cada a items
+    shelf = shelve.open("dataRS1.dat")
+    ratings = Calificacion.objects.all()
+    for ra in ratings:
+        user = int(ra.usuario.id)
+        itemid = int(ra.anime.id)
+        rating = float(ra.calificacion)
+        Prefs.setdefault(user, {})
+        Prefs[user][itemid] = rating
+    shelf['Prefs'] = Prefs
+    shelf['ItemsPrefs'] = transformPrefs(Prefs)
+    shelf.close()
+
 def get_schema():
     return Schema(titulo=TEXT(stored=True), imagen=TEXT(stored=True), rango_web=TEXT(stored=True), 
                   popularidad=TEXT(stored=True), fecha_inicio=DATETIME(stored=True), fecha_final=DATETIME(stored=True), 
                   episodios=TEXT(stored=True), sinopsis=TEXT(stored=True), generos=KEYWORD(stored=True))
 
+
+def deleteCompleteBD():
+    Calificacion.objects.all().delete()
+    InformacionUsuario.objects.all().delete()
+    Genero.objects.all().delete()
+    Anime.objects.all().delete()
+
 def populateDB(i):
-    
+ 
     if i == 0:
-        num_animes = 0
-        num_generos = 0
-        Anime.objects.all().delete()
+        deleteCompleteBD()
+        
         
     if not os.path.exists(dirindex):
         os.mkdir(dirindex)
@@ -98,10 +120,8 @@ def populateDB(i):
         
         lista_generos_obj = []
         for genero in lista_generos:
-            genero_obj, created = Genero.objects.get_or_create(nombre=genero.text)
-            lista_generos_obj.append(genero_obj)
-            if created:
-                num_generos += 1       
+            genero_obj, _ = Genero.objects.get_or_create(nombre=genero.text)
+            lista_generos_obj.append(genero_obj)       
         
         id_u = Anime.objects.all().count() + 1     
         a = Anime.objects.create(id=id_u, titulo=titulo, imagen=imagen, rango=rango_web, popularidad=popularidad_web, episodios=episodios, sinopsis=sinopsis, fechaInicio=fecha_inicio, fechaFinal=fecha_final)
@@ -110,20 +130,55 @@ def populateDB(i):
             a.generos.add(genero)
         
         writer.add_document(titulo=titulo, imagen=imagen, rango_web=rango_web, popularidad=popularidad_web, fecha_inicio=fecha_inicio, fecha_final=fecha_final, episodios=episodios, sinopsis=sinopsis, generos=lista_generos_comas)
-        
-        num_animes += 1
     
     writer.commit()
       
-    return ((num_animes, num_generos))
+    return None
+
+def popularUsuarios():
+    lista=[]
+    dict={}
+    fileobj=open(r"C:\Users\PedroC\git\proyectoaii\data\users", "r")
+    for line in fileobj.readlines():
+        rip = line.split('|')
+        if len(rip) != 4:
+            continue
+        id_u=int(rip[0].strip())
+        u=InformacionUsuario(id=id_u, edad=rip[1].strip(), genero=rip[2].strip(), codigoPostal=rip[3].strip())
+        lista.append(u)
+        dict[id_u]=u
+    fileobj.close()
+    InformacionUsuario.objects.bulk_create(lista)
+
+    return(dict)
+
+def popularCalificaciones():
+    lista=[]
+    dict={}
+    fileobj=open(r"C:\Users\PedroC\git\proyectoaii\data\data", "r")
+    for line in fileobj.readlines():
+        rip = line.split('|')
+        if len(rip) != 5:
+            continue    
+        id_u=int(rip[0].strip())
+        usuario = InformacionUsuario.objects.get(id=rip[1].strip())
+        anime = Anime.objects.get(id=rip[2].strip()) 
+        u=Calificacion(id=id_u, usuario=usuario, anime=anime, fechaCalificacion=rip[3].strip(), calificacion=rip[4].strip())
+        lista.append(u)
+        dict[id_u]=u
+    fileobj.close()
+    Calificacion.objects.bulk_create(lista)
+
+    return(dict)
   
 def carga(request):
     
     if request.method=='POST':
         if 'Aceptar' in request.POST:      
-            for i in range(0,1):
-                num_animes, num_generos = populateDB(i)
-                num_generos = Genero.objects.all().count()
+            for i in range(0,2):
+                populateDB(i)
+            num_animes = Anime.objects.all().count()
+            num_generos = Genero.objects.all().count()
             mensaje="Se han almacenado " + str(num_animes) + " animes y " + str(num_generos) + " géneros"
             return render(request, 'cargaBD.html', {'mensaje':mensaje})
         else:
@@ -189,35 +244,84 @@ def buscar_animesporsinopsis(request):
                 
     return render(request, 'animesbusquedaporsinopsis.html', {'formulario':formulario, 'animes':lista_animes})
 
-def popularUsuarios():
-    InformacionUsuario.objects.all().delete()
-    
-    lista=[]
-    dict={}
-    fileobj=open(r"C:\Users\PedroC\git\proyectoaii\data\users", "r")
-    for line in fileobj.readlines():
-        rip = line.split('|')
-        if len(rip) != 4:
-            continue
-        id_u=int(rip[0].strip())
-        u=InformacionUsuario(id=id_u, edad=rip[1].strip(), genero=rip[2].strip(), codigoPostal=rip[3].strip())
-        lista.append(u)
-        dict[id_u]=u
-    fileobj.close()
-    InformacionUsuario.objects.bulk_create(lista)
-
-    return(dict)
-
-def cargar_usuarios(request):
+def cargar_usuarios_y_calificaciones(request):
     if request.method=='POST':
         if 'Aceptar' in request.POST:
+            Calificacion.objects.all().delete()
+            InformacionUsuario.objects.all().delete()
+            
             popularUsuarios()
+            popularCalificaciones()
+            cargarDiccionario()
+            
             num_usuarios = InformacionUsuario.objects.all().count()
-            mensaje="Se han almacenado " + str(num_usuarios) + " usuarios"
+            num_calificaciones = Calificacion.objects.all().count()
+            mensaje="Se han almacenado " + str(num_usuarios) + " usuarios y " + str(num_calificaciones) + " calificaciones"
             return render(request, 'cargaBD.html', {'mensaje':mensaje})
         else:
             return redirect("/")
            
-    return render(request, 'confirmacion.html')
-    
-    
+    return render(request, 'confirmacionusuarioscalificaciones.html')
+
+def recomendar_animes_usuario(request):
+    mensaje = None
+    if request.method=='GET':
+        form = UsuarioForm(request.GET, request.FILES)
+        if form.is_valid():
+            idUser = form.cleaned_data['id']
+            
+            try:
+                user = get_object_or_404(InformacionUsuario, pk=idUser)
+            except Http404:
+                mensaje = 'No existe ningún usuario con el ID seleccionado'
+                return render(request, 'busquedaporusuarios.html', {'form':form, 'mensaje':mensaje})
+                 
+            shelf = shelve.open("dataRS.dat")
+            Prefs = shelf['Prefs']
+            shelf.close()
+            rankings = getRecommendations(Prefs,int(idUser))
+            recommended = rankings[:2]
+            anime = []
+            scores = []
+            for re in recommended:
+                anime = Anime.objects.filter(pk=re[1])
+                scores.append(re[0])
+            animes = zip(anime,scores)
+            
+            animes_cal = []
+            for a in Calificacion.objects.filter(usuario=user):
+                animes_cal.append(a)
+            
+            return render(request,'recomendacionanimes.html', {'user': user, 'animes_recom': animes, 'animes_cal': animes_cal})
+    form = UsuarioForm()
+    return render(request,'busquedaporusuarios.html', {'form': form})
+  
+def buscar_animessimilares(request):
+    anime = None
+    mensaje = None
+    if request.method=='GET':
+        form = UsuarioForm(request.GET, request.FILES)
+        if form.is_valid():
+            idAnime = form.cleaned_data['id']
+            
+            try:
+                anime = get_object_or_404(Anime, pk=idAnime)
+            except Http404:
+                mensaje = 'No existe ningún anime con el ID seleccionado'
+                return render(request, 'buscaranimessimilares.html', {'form':form, 'mensaje':mensaje})
+                
+            shelf = shelve.open("dataRS.dat")
+            ItemsPrefs = shelf['ItemsPrefs']
+            shelf.close()
+            recommended = topMatches(ItemsPrefs, int(idAnime),n=3)
+            anime = []
+            similar = []
+            for re in recommended:
+                anime.append(Anime.objects.get(pk=re[1]))
+                similar.append(re[0])
+            animes= zip(anime,similar)
+
+            return render(request,'animessimilares.html', {'anime': anime,'animes': animes})
+        
+    form = AnimeForm()
+    return render(request,'buscaranimessimilares.html', {'form': form})  

@@ -1,0 +1,23 @@
+
+
+{% include 'base.html' %}
+
+<section>
+
+	<h1>Tres Animes que mas se parecen a {{anime.0}} son:</h1>
+
+	<l>
+		{% for f, s in animes %}
+		
+			<dt><b>Puntuación para la recomendación:</b> {{s | floatformat:"2"}}</dt>		
+			<dt><img src="{{f.imagen}}"></dt>
+		    <dt><b>Titulo: </b>{{f.titulo}}</dt>
+		    <dd><b>Rango: </b>{{f.rango}} | <b>Popularidad: </b>{{f.popularidad}} | <b>Episodios: </b>{{f.episodios}} </dd>
+		    <dd><b>Fecha de Inicio: </b>{{f.fechaInicio}} | <b>Fecha de Fin: </b>{{f.fechaFinal}} </dd>
+		    <dd><b>Sinopsis: </b>{{f.sinopsis}}</dd>
+			<br>
+		
+		{% endfor %}
+	</l>
+	
+</section>

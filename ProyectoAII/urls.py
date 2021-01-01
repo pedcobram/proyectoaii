@@ -11,6 +11,8 @@ urlpatterns = [
     path('buscaranimesporfechainicio/', views.buscar_animesporfechainicio),
     path('buscaranimesporgenero/', views.buscar_animesporgenero),
     path('buscaranimesporsinopsis/', views.buscar_animesporsinopsis),
-    path('cargarusuarios/', views.cargar_usuarios),
+    path('cargarusuarios/', views.cargar_usuarios_y_calificaciones),
+    path('recomendaranimesporusuario/', views.recomendar_animes_usuario),
+    path('buscaranimessimilares/', views.buscar_animessimilares),
     path('admin/', admin.site.urls),
 ]

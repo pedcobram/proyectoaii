@@ -11,3 +11,9 @@ class BusquedaPorGeneroForm(forms.Form):
     
 class BusquedaPorSinopsisForm(forms.Form):
     sinopsis = forms.CharField(label="Palabras de la sinopsis a buscar (En inglés)", widget=forms.TextInput())
+    
+class UsuarioForm(forms.Form):
+    id = forms.CharField(label='ID de Usuario')
+    
+class AnimeForm(forms.Form):
+    id = forms.CharField(label='ID del Anime')

@@ -1,0 +1,35 @@
+
+{% include 'base.html' %}
+
+<h1>Animes Recomendados para el Usuario {{user.id}}</h1>
+
+{% for row in animes_recom %}
+	
+	<dt><b>Puntuación para la recomendación:</b> {{row.1 | floatformat:"2"}}</dt>		
+	<dt><img src="{{row.0.imagen}}"></dt>
+    <dt><b>Titulo: </b>{{row.0.titulo}}</dt>
+    <dd><b>Rango: </b>{{row.0.rango}} | <b>Popularidad: </b>{{row.0.popularidad}} | <b>Episodios: </b>{{row.0.episodios}} </dd>
+    <dd><b>Fecha de Inicio: </b>{{row.0.fechaInicio}} | <b>Fecha de Fin: </b>{{row.0.fechaFinal}} </dd>
+    <dd><b>Sinopsis: </b>{{row.0.sinopsis}}</dd>
+	<br>
+
+{% empty %}
+
+	<h2> Insufficient user data </h2>
+	
+{% endfor %}
+
+<h1> Animes Votados por el Usuario {{user.id}} </h1>
+
+{% for row in animes_cal %}
+	
+	<dt><b>Calificación:</b> {{row.calificacion}} | <b>Fecha de Calificación:</b> {{row.fechaCalificacion}}</dt>
+	<dt><img src="{{row.anime.imagen}}"></dt>
+    <dt><b>Titulo: </b>{{row.anime.titulo}}</dt>
+    <dd><b>Rango: </b>{{row.anime.rango}} | <b>Popularidad: </b>{{row.anime.popularidad}} | <b>Episodios: </b>{{row.anime.episodios}} </dd>
+    <dd><b>Fecha de Inicio: </b>{{row.anime.fechaInicio}} | <b>Fecha de Fin: </b>{{row.anime.fechaFinal}} </dd>
+    <dd><b>Sinopsis: </b>{{row.anime.sinopsis}}</dd>
+	<br>
+
+
+{% endfor %}
