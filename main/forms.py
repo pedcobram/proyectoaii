@@ -17,3 +17,6 @@ class UsuarioForm(forms.Form):
     
 class AnimeForm(forms.Form):
     id = forms.CharField(label='ID del Anime')
+    
+class DatabaseForm(forms.Form):
+    id = forms.IntegerField(label='Número de páginas a cargar')

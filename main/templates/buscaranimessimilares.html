@@ -5,7 +5,7 @@
 
 <p>{{mensaje}}</p>
 
-<form id='form' method='get' action=''>
+<form id='form' method='get' action=''>{% csrf_token %}
 	{{form.as_p}}
 	<p><input type='submit' value='Aceptar'/></p>
 </form>

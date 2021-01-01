@@ -6,7 +6,7 @@ import os
 import shelve
 
 from main.models import Anime, Genero, InformacionUsuario, Calificacion
-from main.forms import BusquedaPorFechaInicioForm, BusquedaPorGeneroForm, BusquedaPorSinopsisForm, UsuarioForm, AnimeForm
+from main.forms import BusquedaPorFechaInicioForm, BusquedaPorGeneroForm, BusquedaPorSinopsisForm, UsuarioForm, AnimeForm, DatabaseForm
 from django.shortcuts import render, redirect, get_object_or_404
 from main.recommendations import getRecommendations, transformPrefs, topMatches
 #from data import createDataFile, createUserFile
@@ -115,25 +115,24 @@ def populateDB(i):
                 lista.append(genero.text)
             lista_generos_comas = ",".join(lista)
             
+            lista_generos_obj = []
+            
+            for genero in lista_generos:
+                genero_obj, _ = Genero.objects.get_or_create(nombre=genero.text)
+                lista_generos_obj.append(genero_obj)       
+            
+            id_u = Anime.objects.all().count() + 1     
+            a = Anime.objects.create(id=id_u, titulo=titulo, imagen=imagen, rango=rango_web, popularidad=popularidad_web, episodios=episodios, sinopsis=sinopsis, fechaInicio=fecha_inicio, fechaFinal=fecha_final)
+            
+            for genero in lista_generos_obj:
+                a.generos.add(genero)
+            
+            writer.add_document(titulo=titulo, imagen=imagen, rango_web=rango_web, popularidad=popularidad_web, fecha_inicio=fecha_inicio, fecha_final=fecha_final, episodios=episodios, sinopsis=sinopsis, generos=lista_generos_comas)
+               
         except UnicodeEncodeError:
             continue
         
-        lista_generos_obj = []
-        for genero in lista_generos:
-            genero_obj, _ = Genero.objects.get_or_create(nombre=genero.text)
-            lista_generos_obj.append(genero_obj)       
-        
-        id_u = Anime.objects.all().count() + 1     
-        a = Anime.objects.create(id=id_u, titulo=titulo, imagen=imagen, rango=rango_web, popularidad=popularidad_web, episodios=episodios, sinopsis=sinopsis, fechaInicio=fecha_inicio, fechaFinal=fecha_final)
-        
-        for genero in lista_generos_obj:
-            a.generos.add(genero)
-        
-        writer.add_document(titulo=titulo, imagen=imagen, rango_web=rango_web, popularidad=popularidad_web, fecha_inicio=fecha_inicio, fecha_final=fecha_final, episodios=episodios, sinopsis=sinopsis, generos=lista_generos_comas)
-    
     writer.commit()
-      
-    return None
 
 def popularUsuarios():
     lista=[]
@@ -172,19 +171,22 @@ def popularCalificaciones():
     return(dict)
   
 def carga(request):
-    
+    formulario = DatabaseForm()
     if request.method=='POST':
-        if 'Aceptar' in request.POST:      
-            for i in range(0,2):
+        formulario = DatabaseForm(request.POST)
+        if formulario.is_valid():
+            rango = formulario.cleaned_data['id']   
+            for i in range(0, rango):
                 populateDB(i)
             num_animes = Anime.objects.all().count()
             num_generos = Genero.objects.all().count()
             mensaje="Se han almacenado " + str(num_animes) + " animes y " + str(num_generos) + " géneros"
             return render(request, 'cargaBD.html', {'mensaje':mensaje})
         else:
-            return redirect("/")
-           
-    return render(request, 'confirmacion.html')
+            mensaje="Ha ocurrido un error, intentelo de nuevo mas tarde"
+            return render(request, 'cargaBD.html', {'mensaje':mensaje})
+      
+    return render(request, 'confirmacion.html', {'form':formulario})
 
 def index(request): 
     num_animes = Anime.objects.all().count()
