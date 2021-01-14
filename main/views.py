@@ -20,7 +20,7 @@ from whoosh import qparser
 from whoosh.filedb.filestore import FileStorage
 from django.http.response import Http404
 
-dirindex = r"C:\Users\PedroC\git\proyectoaii\Index"
+dirindex = "Index"
 
 def mesANum(mes):
     return {
@@ -137,7 +137,7 @@ def populateDB(i):
 def popularUsuarios():
     lista=[]
     dict={}
-    fileobj=open(r"C:\Users\PedroC\git\proyectoaii\data\users", "r")
+    fileobj=open("users", "r")
     for line in fileobj.readlines():
         rip = line.split('|')
         if len(rip) != 4:
@@ -154,7 +154,7 @@ def popularUsuarios():
 def popularCalificaciones():
     lista=[]
     dict={}
-    fileobj=open(r"C:\Users\PedroC\git\proyectoaii\data\data", "r")
+    fileobj=open("data", "r")
     for line in fileobj.readlines():
         rip = line.split('|')
         if len(rip) != 5:

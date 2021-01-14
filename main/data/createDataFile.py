@@ -33,7 +33,7 @@ def create_datafile(num_usuarios, num_calificaciones, num_anime):
     ## AÑADIMOS A UN DICCIONARIO CADA LINEA Y LAS CONTAMOS
     lista1 = []
     
-    fileobj=open(r"C:\Users\PedroC\git\proyectoaii\data\test", "r")
+    fileobj=open("test", "r")
     for line in fileobj.readlines():
         rip = line.split('|')
         if len(rip) != 4:
