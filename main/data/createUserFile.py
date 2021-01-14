@@ -1,6 +1,10 @@
 from random import randrange
 
 
+#
+## CREACIÓN DE USUARIOS PARA EL SISTEMA DE RECOMENDACIÓN
+#
+
 def numAGenero(num):
     return {
              1 : 'F',

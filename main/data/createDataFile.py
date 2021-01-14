@@ -1,6 +1,10 @@
 from random import randrange
 import datetime
 
+#
+## CREACIÓN DE NUEVOS DATOS PARA EL SISTEMA DE RECOMENDACIÓN
+#
+
 def random_date():
     start_date = datetime.date(2015, 1, 1)
     end_date = datetime.date(2020, 2, 1)
@@ -84,10 +88,10 @@ def create_datafile(num_usuarios, num_calificaciones, num_anime):
         for line in a:
             b.write("{:d}|{}\n".format(index, line.rstrip()))
             index += 1  
-    
-num_usuarios = 100
-num_calificaciones = 20
-num_anime = 49
+   
+num_usuarios = 100              # NÚMERO DE USUARIOS GUARDADOS EN LA BD
+num_calificaciones = 20         # NÚMERO DE CALIFICACIONES QUE QUEREMOS QUE CADA USUARIO TENGA
+num_anime = 49                  # NÚMERO DE ANIMES GUARDADOS EN LA BD
 
 create_datafile(num_usuarios, num_calificaciones, num_anime)
 

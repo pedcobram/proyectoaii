@@ -20,7 +20,7 @@ from whoosh import qparser
 from whoosh.filedb.filestore import FileStorage
 from django.http.response import Http404
 
-dirindex = "Index"
+dirindex = "ProyectoAII/Index"
 
 def mesANum(mes):
     return {
@@ -40,7 +40,7 @@ def mesANum(mes):
 
 def cargarDiccionario():
     Prefs={}   # matriz de usuarios y puntuaciones a cada a items
-    shelf = shelve.open("dataRS1.dat")
+    shelf = shelve.open("ProyectoAII/dataRS1.dat")
     ratings = Calificacion.objects.all()
     for ra in ratings:
         user = int(ra.usuario.id)
@@ -137,7 +137,7 @@ def populateDB(i):
 def popularUsuarios():
     lista=[]
     dict={}
-    fileobj=open("users", "r")
+    fileobj=open("ProyectoAII/main/data/users", "r")
     for line in fileobj.readlines():
         rip = line.split('|')
         if len(rip) != 4:
@@ -154,7 +154,7 @@ def popularUsuarios():
 def popularCalificaciones():
     lista=[]
     dict={}
-    fileobj=open("data", "r")
+    fileobj=open("ProyectoAII/main/data/data", "r")
     for line in fileobj.readlines():
         rip = line.split('|')
         if len(rip) != 5:
@@ -278,7 +278,7 @@ def recomendar_animes_usuario(request):
                 mensaje = 'No existe ningún usuario con el ID seleccionado'
                 return render(request, 'busquedaporusuarios.html', {'form':form, 'mensaje':mensaje})
                  
-            shelf = shelve.open("dataRS.dat")
+            shelf = shelve.open("ProyectoAII/dataRS1.dat")
             Prefs = shelf['Prefs']
             shelf.close()
             rankings = getRecommendations(Prefs,int(idUser))
@@ -312,7 +312,7 @@ def buscar_animessimilares(request):
                 mensaje = 'No existe ningún anime con el ID seleccionado'
                 return render(request, 'buscaranimessimilares.html', {'form':form, 'mensaje':mensaje})
                 
-            shelf = shelve.open("dataRS.dat")
+            shelf = shelve.open("ProyectoAII/dataRS1.dat")
             ItemsPrefs = shelf['ItemsPrefs']
             shelf.close()
             recommended = topMatches(ItemsPrefs, int(idAnime),n=3)
