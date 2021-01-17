@@ -34,8 +34,7 @@ def numAPostalCode(num):
     }[num]
 
 def create_usersfile(num_usuarios):
-    
-    users = open("users", "w")
+    users = open("users", "w+")
     
     # Rango del número de usuarios
     for i in range(1,num_usuarios+1):
@@ -48,7 +47,6 @@ def create_usersfile(num_usuarios):
         linea = '|'.join(lista)
         users.write(linea + "\n")
     
-    users.close()
+    users.close()    
     
-    
-create_usersfile(100)
+create_usersfile(150)

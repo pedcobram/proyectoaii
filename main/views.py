@@ -9,7 +9,8 @@ from main.models import Anime, Genero, InformacionUsuario, Calificacion
 from main.forms import BusquedaPorFechaInicioForm, BusquedaPorGeneroForm, BusquedaPorSinopsisForm, UsuarioForm, AnimeForm, DatabaseForm
 from django.shortcuts import render, redirect, get_object_or_404
 from main.recommendations import getRecommendations, transformPrefs, topMatches
-#from data import createDataFile, createUserFile
+from main.data.createDataFile import create_datafile
+from main.data.createUserFile import create_usersfile
 
 from bs4 import BeautifulSoup
 
@@ -105,8 +106,12 @@ def populateDB(i):
             
             if(len(emision) > 0):
                 fecha_inicio = datetime.datetime(int(emision[2]), mesANum(emision[0]), int(emision[1].split(',')[0])).strftime("%Y-%m-%d")
+            else:
+                fecha_inicio = None
             if(len(emision) > 5):
                 fecha_final = datetime.datetime(int(emision[6]), mesANum(emision[4]), int(emision[5].split(',')[0])).strftime("%Y-%m-%d")
+            else:
+                fecha_final = None
             
             lista_generos = s.find("td", class_="borderClass").next_element.find_all('span', itemprop="genre")
             
@@ -137,6 +142,7 @@ def populateDB(i):
 def popularUsuarios():
     lista=[]
     dict={}
+    create_usersfile(150)
     fileobj=open("ProyectoAII/main/data/users", "r")
     for line in fileobj.readlines():
         rip = line.split('|')
@@ -154,17 +160,21 @@ def popularUsuarios():
 def popularCalificaciones():
     lista=[]
     dict={}
+    create_datafile(InformacionUsuario.objects.all().count(), 35, Anime.objects.all().count())
     fileobj=open("ProyectoAII/main/data/data", "r")
     for line in fileobj.readlines():
         rip = line.split('|')
         if len(rip) != 5:
-            continue    
-        id_u=int(rip[0].strip())
-        usuario = InformacionUsuario.objects.get(id=rip[1].strip())
-        anime = Anime.objects.get(id=rip[2].strip()) 
-        u=Calificacion(id=id_u, usuario=usuario, anime=anime, fechaCalificacion=rip[3].strip(), calificacion=rip[4].strip())
-        lista.append(u)
-        dict[id_u]=u
+            continue  
+        try:  
+            id_u=int(rip[0].strip())
+            usuario = InformacionUsuario.objects.get(id=rip[1].strip())
+            anime = Anime.objects.get(id=rip[2].strip()) 
+            u=Calificacion(id=id_u, usuario=usuario, anime=anime, fechaCalificacion=rip[3].strip(), calificacion=rip[4].strip())
+            lista.append(u)
+            dict[id_u]=u
+        except Anime.DoesNotExist:
+            continue
     fileobj.close()
     Calificacion.objects.bulk_create(lista)
 

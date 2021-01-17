@@ -89,9 +89,9 @@ def create_datafile(num_usuarios, num_calificaciones, num_anime):
             b.write("{:d}|{}\n".format(index, line.rstrip()))
             index += 1  
    
-num_usuarios = 100              # NÚMERO DE USUARIOS GUARDADOS EN LA BD
-num_calificaciones = 20         # NÚMERO DE CALIFICACIONES QUE QUEREMOS QUE CADA USUARIO TENGA
-num_anime = 49                  # NÚMERO DE ANIMES GUARDADOS EN LA BD
+num_usuarios = 150              # NÚMERO DE USUARIOS GUARDADOS EN LA BD
+num_calificaciones = 35         # NÚMERO DE CALIFICACIONES QUE QUEREMOS QUE CADA USUARIO TENGA
+num_anime = 142                  # NÚMERO DE ANIMES GUARDADOS EN LA BD
 
 create_datafile(num_usuarios, num_calificaciones, num_anime)
 
